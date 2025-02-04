@@ -1,4 +1,4 @@
 # PIC16B-Group-E
-X . .
+X . X
 . O .
 O X O
