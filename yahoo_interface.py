@@ -367,4 +367,8 @@ def get_all_features(ticker, start_date, end_date, alpha = 0.8, smoothing = True
     
     df = calculate_KDJ(df, window_k_raw, window_d, window_k_smooth)
     
-    return df.dropna().reset_index(drop=True)
+    df = df.dropna().reset_index(drop = True)
+    
+    df = df[40:]
+    
+    return df

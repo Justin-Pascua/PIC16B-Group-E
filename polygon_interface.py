@@ -1,5 +1,6 @@
 # Note: run pip install polygon-api-client
 # get API key at https://polygon.io/stocks?utm_term=polygon%20api%20key&utm_campaign=Brand+-+ALL+(Conv+Value+tROAS)&utm_source=adwords&utm_medium=ppc&hsa_acc=4299129556&hsa_cam=14536485495&hsa_grp=132004734661&hsa_ad=591202818400&hsa_src=g&hsa_tgt=kwd-1443312992629&hsa_kw=polygon%20api%20key&hsa_mt=e&hsa_net=adwords&hsa_ver=3&gad_source=1&gclid=Cj0KCQjwm7q-BhDRARIsACD6-fXXpjDRkXM9S6_QG4Q-wOpYGAVtxv0rOzek563ebR5vHTy89qfGIvwaApzHEALw_wcB
+
 import pandas as pd
 from polygon import RESTClient
 import requests
