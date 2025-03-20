@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-import polygon_interface
 import yahoo_interface
 import math
 
