@@ -16,8 +16,21 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+import sys
+
+# Get the absolute path to the directory containing the .py file
+module_path = os.path.abspath(os.path.join('..')) # Use relative or absolute path. '..' means one level up.
+
+if module_path not in sys.path:
+    sys.path.append(module_path)
+    
 import yahoo_interface
-import math
+
+import tensorflow as tf
+import tensorflow_decision_forests as tfdf
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
 
 # Used to keep values in [0,1]
 def proj(x, a, b):
@@ -142,7 +155,6 @@ def create_training_and_val_sets(tickers, start_date, end_date, chunk_size = 365
 
 # modified version of create_training_sequences. Only outputs X array, not y array
 def create_sequences(data, window_size = 60):
-    
     """
       Returns a list of windows in data of length window_size
           and a list containing corresponding to the data value immediately proceeding a window
@@ -156,86 +168,88 @@ def create_sequences(data, window_size = 60):
         X.append(data[i: i + window_size, 0])    # closing prices in last (seq_length)-days
     return np.array(X)
 
-# creates LSTM model
-def create_LSTM(imported_weights = None, training_set = None):
-    """
-    Creates and returns an LSTM model trained in one of two ways:
-        if imported_weights is specified, then weights are loaded in using model.load_weights()
-        if training_set is specified, then model is trained using model.fit()
-    If both ways are specified, then imported_weights takes precedence
-    If none of the two ways are specified, then method calls create_training_sets
-    to create a training set.
-        :param imported_weights: a string ending in '.weights.h5', indicating the name of a weights file which is compatible with the architecture of the LSTM model below
-        :param training_set: a tuple of the form (X_train, y_train), where X_train is a numpy array of size (n, 60) and y_train is of size (n,), where n is the number of records in the training data
-    """
-    
-    # create model
-    model = keras.Sequential([
-        layers.LSTM(32, return_sequences = True, input_shape = (60, 1)),
-        layers.Dropout(0.2),
-        layers.LSTM(64),
-        layers.Dropout(0.2),
-        layers.Dense(32, activation = 'relu'),
-        layers.Dropout(0.2),
-        layers.Dense(1)
-    ])
-    
-    # compile model
-    model.compile(optimizer = 'adam', loss = 'mean_squared_error')
-    
-    # if weights specified, import and return
-    if imported_weights != None:
-        model.load_weights(imported_weights)
-    elif training_set != None:
-        model.fit(training_set[0], training_set[1], epochs = 50)
-    else:
-        tickers = ['AAPL', 'COST', 'CVX', 'WM', 'LLY']
-        start_date = '2000-01-01' 
-        end_date = '2025-03-10'
-        X_train, y_train = create_training_sets(tickers, start_date, end_date, 
-                                                chunk_size = 365, smoothing = True, alpha = 0.5)
-        model.fit(X_train, y_train, epochs = 50)
-        
+def create_random_forest(X_train, y_train, 
+                           n_estimators=100, 
+                           max_depth=None, 
+                           min_samples_split=2, 
+                           min_samples_leaf=1, 
+                           random_state=42):
+    """Creates, trains, and returns a RandomForestRegressor model."""
+    model = RandomForestRegressor(n_estimators=n_estimators,
+                                  max_depth=max_depth,
+                                  min_samples_split=min_samples_split,
+                                  min_samples_leaf=min_samples_leaf,
+                                  random_state=random_state)
+    model.fit(X_train, y_train)
     return model
- 
-class LSTM_wrapper:
-    def __init__(self, imported_weights = None, training_set = None):
-        self.model = create_LSTM(imported_weights, training_set)
+
+class Random_Forest_wrapper:
+    def __init__(self, X_train, y_train):
+        self.model = create_random_forest(X_train, y_train)
+   
+    def mse_evaluation(self, X_val, y_val):
+        """
+        Makes predictions and evaluates the model's performance.
+        """
+        
+        y_pred = self.model.predict(X_val)
+    
+        mse = mean_squared_error(y_val, y_pred)
+        r2 = r2_score(y_val, y_pred)
+    
+        print(f"Mean Squared Error (MSE): {mse}")
+        print(f"R-squared (R2): {r2}")
+    
+        return y_pred
+    
+    def scatter_plot_evaluation(self, y_val, y_pred):
+        """
+        Creates a scatter plot of actual vs. predicted values.
+        """
+        plt.scatter(y_val, y_pred)
+        plt.xlabel("Actual Values")
+        plt.ylabel("Predicted Values")
+        plt.title("Actual vs. Predicted Values (Random Forest Regression)")
+        plt.show()
         
     def line_plot_evaluation(self, tickers, start_date, end_date):
+        """
+        Creates a line plot comparing actual vs predicted prices against multiple stocks
+        """
         scaler = MinMaxScaler(feature_range = (0, 1))
         
-        plt.figure(figsize = (20,10))
+        plt.figure(figsize = (15,10))
         for i in range(6):
-          # reading data
-          df = yahoo_interface.get_all_features(f'{tickers[i]}', start_date, end_date, smoothing = False)
-          closing_prices = df['Close'].values.reshape(-1, 1)
-          scaled_data = scaler.fit_transform(closing_prices)
+            # reading data
+            df = yahoo_interface.get_all_features(f'{tickers[i]}', '2024-01-01', '2025-01-01', smoothing = False)
+            closing_prices = df['Close'].values
+            closing_prices = closing_prices[:,np.newaxis]
+            scaled_data = scaler.fit_transform(closing_prices)
         
-          # formatting data to be fed into model
-          window_size = 60
-          X_full = create_sequences(scaled_data, window_size)
+            # formatting data to be fed into model
+            window_size = 60
+            X_full = create_sequences(scaled_data, window_size)
         
-          # getting predictions
-          full_predict = self.model.predict(X_full)
-          full_predict = scaler.inverse_transform(full_predict)
-          mse = mean_squared_error(closing_prices[59:], full_predict)
+            # getting predictions
+            full_predict = self.model.predict(X_full)
+            full_predict = full_predict[:,np.newaxis]
+            full_predict = scaler.inverse_transform(full_predict)
         
-          # Plotting real vs predicted prices
-          known_plot = np.empty((closing_prices.shape[0] + 1, 1))
-          known_plot[:, :] = np.nan
-          known_plot[:closing_prices.shape[0], :] = closing_prices
+            # Plotting real vs predicted prices
+            known_plot = np.empty((closing_prices.shape[0] + 1, 1))
+            known_plot[:, :] = np.nan
+            known_plot[:closing_prices.shape[0], :] = closing_prices
         
-          prediction_plot = np.empty((closing_prices.shape[0] + 1, 1))
-          prediction_plot[:, :] = np.nan
-          prediction_plot[window_size: closing_prices.shape[0] + 1, :] = full_predict
+            prediction_plot = np.empty((closing_prices.shape[0] + 1, 1))
+            prediction_plot[:, :] = np.nan
+            prediction_plot[window_size: closing_prices.shape[0] + 1, :] = full_predict
         
-          # set up subplots
-          plt.subplot(2,3,i+1)
-          plt.title(f'{tickers[i]}')
-          plt.plot(known_plot, color = 'blue', label = 'Actual Price')
-          plt.plot(prediction_plot, color = 'orange', label = f'Predicted Price (MSE = {mse:.4f})')
-          plt.legend()
+            # set up subplots
+            plt.subplot(2,3,i+1)
+            plt.title(f'{tickers[i]}')
+            plt.plot(known_plot, color = 'blue', label = 'Actual Price')
+            plt.plot(prediction_plot, color = 'orange', label = 'Predicted Price')
+            plt.legend()
         
         plt.show()
         
@@ -254,20 +268,12 @@ class LSTM_wrapper:
         
         # get predictions
         for i in range(days_forward):
-            # get last 60 days in array
             seq = create_sequences(forecast_arr[-60:], 60)
-        
-            # predict next day using model
-            one_predict = self.model.predict(seq, verbose = 0)
-        
-            # add noise to prediction
-            updated_value = np.array(one_predict[0][0].item()*(1 + 0.1 * noise()))
-            one_predict[0][0] = updated_value.item()
-        
-            # add prediction to array
+            one_predict = self.model.predict(seq)
+            one_predict[0] = one_predict[0]*(1 + 0.1 * noise())
+            one_predict = one_predict[:,np.newaxis]
             forecast_arr = np.concatenate((forecast_arr, one_predict))
         
-        # reverse data scaling
         forecast_arr = scaler.inverse_transform(forecast_arr)
         
         return forecast_arr
@@ -284,3 +290,5 @@ class LSTM_wrapper:
             forecast_list.append(self.forecast(stock_data = stock_data, days_forward = days_forward))
 
         return forecast_list
+    
+    
