@@ -142,7 +142,6 @@ def create_training_and_val_sets(tickers, start_date, end_date, chunk_size = 365
 
 # modified version of create_training_sequences. Only outputs X array, not y array
 def create_sequences(data, window_size = 60):
-    
     """
       Returns a list of windows in data of length window_size
           and a list containing corresponding to the data value immediately proceeding a window
@@ -200,9 +199,20 @@ def create_LSTM(imported_weights = None, training_set = None):
  
 class LSTM_wrapper:
     def __init__(self, imported_weights = None, training_set = None):
+        """
+        Initializes object using create_random_forest
+            :param imported_weights: a string ending in '.weights.h5', indicating the name of a weights file which is compatible with the architecture of the LSTM model below
+            :param training_set: a tuple of the form (X_train, y_train), where X_train is a numpy array of size (n, 60) and y_train is of size (n,), where n is the number of records in the training data
+        """
         self.model = create_LSTM(imported_weights, training_set)
         
     def line_plot_evaluation(self, tickers, start_date, end_date):
+        """
+        Creates a line plot comparing actual vs predicted prices against multiple stocks
+            :param tickers: a list of strings containing 6 stock tickers
+            :param start_date: A string of the form YYYY-MM-DD specifying the start of the date range
+            :param end_date: A string of the form YYYY-MM-DD specifying the end of the date range
+        """
         scaler = MinMaxScaler(feature_range = (0, 1))
         
         plt.figure(figsize = (20,10))

@@ -174,7 +174,16 @@ def create_random_forest(training_set = None,
                            min_samples_split=2, 
                            min_samples_leaf=1, 
                            random_state=42):
-    """Creates, trains, and returns a RandomForestRegressor model."""
+    """
+    Creates, trains, and returns a RandomForestRegressor model.
+        :param training_set: a tuple of the form (X_train, y_train), where X_train is a numpy array of size (n, 60) and y_train is of size (n,), where n is the number of records in the training data
+        :param n_estimators: number of trees in forest
+        :param max_depth: max depth of a tree
+        :param min_samples_split: minimum nnumber of samples required to split an internal node
+        :param min_samples_leaf: minimum number of samples required to be at a leaf node
+        :param random_state: parameter controling randomness of bootstrapping and sampling of features
+    """
+    
     model = RandomForestRegressor(n_estimators=n_estimators,
                                   max_depth=max_depth,
                                   min_samples_split=min_samples_split,
@@ -194,11 +203,17 @@ def create_random_forest(training_set = None,
 
 class Random_Forest_wrapper:
     def __init__(self, training_set = None):
+        """
+        Initializes object using create_random_forest
+            :param training_set: a tuple of the form (X_train, y_train), where X_train is a numpy array of size (n, 60) and y_train is of size (n,), where n is the number of records in the training data
+        """
         self.model = create_random_forest(training_set = training_set)
    
     def mse_evaluation(self, X_val, y_val):
         """
         Makes predictions and evaluates the model's performance.
+            :param X_val: a numpy array of shape (n,60) representing a validation data set
+            :param y_val: a numpy array of shape (n,) representing the labels of the validation set
         """
         
         y_pred = self.model.predict(X_val)
@@ -224,6 +239,9 @@ class Random_Forest_wrapper:
     def line_plot_evaluation(self, tickers, start_date, end_date):
         """
         Creates a line plot comparing actual vs predicted prices against multiple stocks
+            :param tickers: a list of strings containing 6 stock tickers
+            :param start_date: A string of the form YYYY-MM-DD specifying the start of the date range
+            :param end_date: A string of the form YYYY-MM-DD specifying the end of the date range
         """
         scaler = MinMaxScaler(feature_range = (0, 1))
         

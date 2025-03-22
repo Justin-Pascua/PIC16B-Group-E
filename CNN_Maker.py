@@ -192,6 +192,11 @@ def create_CNN(imported_weights = None, training_set = None):
 
 class CNN_Wrapper:
     def __init__(self, imported_weights = None, training_set = None):
+        """
+        Initializes object using create_random_forest
+            :param imported_weights: a string ending in '.weights.h5', indicating the name of a weights file which is compatible with the architecture of the LSTM model below
+            :param training_set: a tuple of the form (X_train, y_train), where X_train is a numpy array of size (n, 14, 10) and y_train is of size (n,), where n is the number of records in the training data
+        """
         self.model = create_CNN(imported_weights, training_set)
         
     def evaluate(self, ticker, start_date, end_date, smoothing = True, alpha = 0.5):
