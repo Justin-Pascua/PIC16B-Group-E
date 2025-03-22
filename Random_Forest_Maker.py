@@ -168,7 +168,7 @@ def create_sequences(data, window_size = 60):
         X.append(data[i: i + window_size, 0])    # closing prices in last (seq_length)-days
     return np.array(X)
 
-def create_random_forest(X_train, y_train, 
+def create_random_forest(training_set = None, 
                            n_estimators=100, 
                            max_depth=None, 
                            min_samples_split=2, 
@@ -180,12 +180,21 @@ def create_random_forest(X_train, y_train,
                                   min_samples_split=min_samples_split,
                                   min_samples_leaf=min_samples_leaf,
                                   random_state=random_state)
-    model.fit(X_train, y_train)
+    if training_set != None:
+        model.fit(training_set[0], training_set[1])
+    else:
+        tickers = ['AAPL', 'COST', 'CVX', 'WM', 'LLY']
+        start_date = '2000-01-01' 
+        end_date = '2025-03-10'
+        X_train, y_train = create_training_sets(tickers, start_date, end_date, 
+                                                chunk_size = 365, smoothing = True, alpha = 0.5)
+        model.fit(X_train, y_train)
+        
     return model
 
 class Random_Forest_wrapper:
-    def __init__(self, X_train, y_train):
-        self.model = create_random_forest(X_train, y_train)
+    def __init__(self, training_set = None):
+        self.model = create_random_forest(training_set = training_set)
    
     def mse_evaluation(self, X_val, y_val):
         """
