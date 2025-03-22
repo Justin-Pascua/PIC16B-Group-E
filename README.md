@@ -1,5 +1,8 @@
 # PIC16B-Group-E
-. O .
-X O X
-. O X
-O X O
+Our project focuses on stock price prediction, addressing the challenges that new investors face when analyzing market trends. The stock market is inherently complex and influenced by numerous unpredictable factors, making it difficult for beginners to make informed decisions. Financial analysis requires extensive knowledge, time, and experience, and many investors struggle to interpret vast amounts of stock data. Our goal was to develop a tool that helps users gain confidence in their investment choices by providing machine learning-driven stock price predictions. 
+
+The repository contains two files, yahoo_interface.py and polygon_interface, which contains functions for retrieving and processing responses from the Yahoo Finance and Polygon APIs. These functions retrieve API responses and read them into pandas dataframes. It’s recommended that the user use yahoo_interface.py, which deals with the Yahoo Finance API, as the Polygon API’s free plan limits users to five API calls per minute, and only allows access to data as far back as two years. 
+
+The files CNN_Maker.py, LSTM_Maker.py, and Random_Forest_Maker.py contain the functions needed for creating the models as well as training/test data sets to be fed into the model. Each of these three files contains a wrapper class for their respective model (e.g. CNN_Maker has a class CNN_wrapper, and likewise for LSTM_Maker and Random_Forest_Maker). The models are created by instantiating these classes and passing either a specified training set, or (in the case of the CNN and LSTM model) loading in a weights file. The repository contains two weights files, one for the CNN and one for the LSTM, which were obtained by training the respective models on data from AAPL, COST, CVX, WM, LLY over the dates 2000-01-01 to 2025-03-10. 
+
+The folders “csv_data_polygon” and “csv_data_yahoo” can be disregarded. These were used in the early stages of the project to train the models. Rather than importing these csv files, the user can instead use yahoo_interface.py to obtain the desired data. The “Notebook Work” can also be disregarded by the user. This is where we placed our scratchwork. All the finished work is laid out in the five .py files described earlier which can be found in the main directory.
